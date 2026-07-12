@@ -1,14 +1,13 @@
 """
-Turns text into a 384-dim vector using a free, local embedding model.
-Similar meanings -> vectors that land close together (compared later via cosine similarity).
+Turns text into a 384-dim vector using fastembed (ONNX-based, no PyTorch) --
+lightweight enough to run on Render's free tier, unlike sentence-transformers.
 """
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
-model = SentenceTransformer('all-MiniLM-L6-v2')  # <- your line here
+model = TextEmbedding()  # defaults to BAAI/bge-small-en-v1.5, 384-dim
 
 
 def embed_text(text: str) -> list[float]:
     """Returns a 384-dim embedding vector for the given text."""
-    raw_vector = model.encode(text)
-    return raw_vector.tolist()
-
+    result = list(model.embed([text]))
+    return result[0].tolist()
