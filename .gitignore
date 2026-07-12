@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+data/resumes/*
+!data/resumes/.gitkeep
+sample_resume.docx
+test_apis.py
+career2_env/
