@@ -20,7 +20,7 @@ api = FastAPI(title="Career Copilot")
 
 api.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://career-copilot-frontend-82uu.onrender.com"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
