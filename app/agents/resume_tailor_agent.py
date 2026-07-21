@@ -7,6 +7,7 @@ from app.db.session import SessionLocal
 from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 from app.guardrails.policies import check_resume_honesty
+from app.tools.retry import call_with_retry
 
 gemini_client = genai.Client()
 
@@ -56,10 +57,9 @@ def tailor_resume_for_job(db, resume_id: int, job_id: int) -> dict:
     job = get_job_by_id(db,job_id)
     if resume is None or job is None:
         raise ValueError("Resume or job not found")
-    response = gemini_client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=TAILOR_PROMPT.format(profile_json = resume.profile_summary,job_description = job.description)
-        )
+    response = call_with_retry(gemini_client.models.generate_content, 
+                               model="gemini-2.5-flash", 
+                               contents=TAILOR_PROMPT.format(profile_json = resume.profile_summary,job_description = job.description))
     cleaned = clean_json_response(response.text)
     results = json.loads(cleaned)
 

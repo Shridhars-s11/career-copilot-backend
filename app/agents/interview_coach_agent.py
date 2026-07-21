@@ -2,6 +2,7 @@ from google import genai
 from app.tools.resume_parser import clean_json_response
 from app.db.crud import get_job_by_id, save_interview_session
 from app.db.session import SessionLocal
+from app.tools.retry import call_with_retry
 from typing import TypedDict
 from langgraph.graph import StateGraph,START,END
 import json
@@ -31,11 +32,11 @@ def generate_interview_question(db, job_id: int) -> dict:
     
     if job is None:
         raise ValueError("Resume or job not found")
-    response = gemini_client.models.generate_content(
-    model="gemini-2.5-flash",
-    contents=QUESTION_PROMPT.format(job_description = job.description)
-        )
-    
+    response = call_with_retry(
+            gemini_client.models.generate_content,
+            model="gemini-2.5-flash",
+            contents=QUESTION_PROMPT.format(job_description=job.description),
+)   
     cleaned = clean_json_response(response.text)
     result = json.loads(cleaned)
 

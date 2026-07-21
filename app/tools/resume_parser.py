@@ -11,6 +11,7 @@ import docx
 from anthropic import Anthropic
 from google import genai
 from dotenv import load_dotenv
+from app.tools.retry import call_with_retry
 
 
 gemini_client = genai.Client()  # reads GEMINI_API_KEY from env automatically
@@ -73,9 +74,9 @@ def clean_json_response(text: str) -> str:
 
 
 def build_structured_profile(raw_text: str, extra_skills: str = "") -> str:
-    response = gemini_client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=PROFILE_PROMPT.format(raw_text=raw_text, extra_skills=extra_skills),
+    response = call_with_retry(gemini_client.models.generate_content, 
+                               model="gemini-2.5-flash", 
+                               contents=PROFILE_PROMPT.format(raw_text=raw_text, extra_skills=extra_skills)
     )
     return clean_json_response(response.text)  # or message.content[0].text, whichever you're using
 

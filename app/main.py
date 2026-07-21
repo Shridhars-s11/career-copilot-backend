@@ -1,19 +1,20 @@
 import uuid
+import json
+import shutil
 from fastapi import FastAPI, Depends ,UploadFile, File ,HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
-import json
-import shutil
 from pathlib import Path
 from app.tools.resume_parser import extract_raw_text, build_structured_profile
-from app.db.crud import save_resume,save_interview_session,get_resume_by_id
+from app.db.crud import save_resume,save_interview_session,get_resume_by_id, get_all_resumes
 from app.db.session import get_db
 from app.agents.orchestrator_agent import app as orchestrator_app, OrchestratorState
 from app.agents.interview_coach_agent import app as interview_coach_app, InterviewCoachState,generate_interview_question, evaluate_interview_answer
 from app.agents.resume_tailor_agent import tailor_resume_for_job
-from langgraph.types import Command
+from app.agents.performance_analyst_agent import build_score_trends
 from app.guardrails.policies import check_resume_honesty
+from langgraph.types import Command
 
 api = FastAPI(title="Career Copilot")
 
@@ -167,3 +168,20 @@ def tailor_resume(request: TailorRequest, db: Session = Depends(get_db)):
         version_label=f"tailored-for-job-{request.job_id}", is_master=False,
     )
     return {"new_resume_id": new_id, "tailored_profile": tailored}
+
+@api.get("/performance/trends")
+def get_progress_trends(db: Session = Depends(get_db)):
+    return build_score_trends(db)
+
+@api.get("/resumes")
+def list_resumes(db: Session = Depends(get_db)):
+    resumes = get_all_resumes(db)
+    return [
+        {
+            "id": r.id,
+            "version_label": r.version_label,
+            "is_master": r.is_master,
+            "created_at": r.created_at.isoformat(),
+        }
+        for r in resumes
+    ]

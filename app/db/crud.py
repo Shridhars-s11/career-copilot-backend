@@ -113,3 +113,8 @@ def update_application_status(db: Session, application_id: int, new_status: Appl
         application.status = new_status
     db.commit()
     
+
+def get_all_resumes(db: Session) -> list[Resume]:
+    """Returns every resume, newest first."""
+    statement = select(Resume).order_by(Resume.created_at.desc())
+    return db.scalars(statement).all()
